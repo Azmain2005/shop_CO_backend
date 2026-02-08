@@ -7,7 +7,7 @@ const Product = new mongoose.model("Product",productSchema);
 // get all Products
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find({}).populate('brand').populate("collections").populate("tax").populate("categorie").populate("attribute"); //  populate brand,collection data
+    const products = await Product.find({}).populate('brand').populate("collections").populate("tax").populate("categorie"); //  populate brand,collection data
     res.status(200).json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch Products" });
@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 // get single Product
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('brand').populate("collections").populate("tax").populate("categorie").populate("attribute"); // populate brand,colletion data
+    const product = await Product.findById(req.params.id).populate('brand').populate("collections").populate("tax").populate("categorie"); // populate brand,colletion data
     if (!product) return res.status(404).json({ error: "Product not found" });
     res.status(200).json(product);
   } catch (err) {

@@ -5,19 +5,19 @@ const productSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  purchased:{
-        type:Number,
-        required:true,
-    },
-    selling:{
-        type:Number,
-        required:true,
-    },
-    unit:{
-        type:Number,
-        required:true,
-    },
-    overview: {
+  purchased: {
+    type: Number,
+    required: true,
+  },
+  selling: {
+    type: Number,
+    required: true,
+  },
+  unit: {
+    type: Number,
+    required: true,
+  },
+  overview: {
     type: String,
     required: true,
   },
@@ -28,14 +28,14 @@ const productSchema = mongoose.Schema({
   tags: {
     type: String,
   },
-  refundable:{
-        type: String,
-        enum:["yes",'no']
-    },
-    warrenty:{
-        type: String,
-        enum:["yes",'no']
-    },
+  refundable: {
+    type: String,
+    enum: ["yes", 'no']
+  },
+  warrenty: {
+    type: String,
+    enum: ["yes", 'no']
+  },
   photos: {
     type: [String],
     required: true,
@@ -46,7 +46,7 @@ const productSchema = mongoose.Schema({
       message: 'Values array cannot be empty.',
     },
   },
-   meta_title: {
+  meta_title: {
     type: String,
   },
   meta_tags: {
@@ -59,7 +59,24 @@ const productSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-   brand: {
+  attributes: [
+    {
+      title: {
+        type: String,
+        required: true,
+      },
+      values: {
+        type: [String],
+        required: true,
+        validate: {
+          validator: arr => Array.isArray(arr) && arr.length > 0,
+          message: "Attribute values cannot be empty",
+        },
+      },
+    },
+  ],
+
+  brand: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Brand',
     required: true,
@@ -79,13 +96,7 @@ const productSchema = mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Categorie',
     }
-  ],
-  attribute: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Attribute',
-    }
-  ],
+  ]
 });
 
 module.exports = productSchema;

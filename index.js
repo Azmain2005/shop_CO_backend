@@ -6,9 +6,10 @@ const categorieHandler = require("./routeHandler/categorieHandler");
 const brandHandler = require ("./routeHandler/brandHandler");
 const collectionHandler = require("./routeHandler/collectionHandler");
 const taxHandler = require("./routeHandler/taxHandler");
-const attributeHandler = require("./routeHandler/attributeHandler");
 const productHandler = require("./routeHandler/productHandler");
 const subscriptionHandler = require("./routeHandler/subscriptionHandler");
+const userHandler = require("./routeHandler/userHandler");
+const cartHandler = require("./routeHandler/cartHandler");
 
 
 const cors = require("cors"); // ✅ import cors
@@ -22,15 +23,13 @@ app.use(express.json());
 
 
 // ✅ enable CORS
-app.use(cors()); // allow Next.js frontend only
-// OR allow all origins (not recommended for production):
-// app.use(cors());
+app.use(cors());
 
 
 
 
 //database connect
-mongoose.connect('mongodb+srv://azmain2005mahtab_db_user:Azmain.2005@cluster0.6klkamu.mongodb.net/store')
+mongoose.connect('mongodb://localhost:27017/store')
 .then(()=>{
     console.log("connection successfull.")
 })
@@ -46,9 +45,10 @@ app.use("/categorie", categorieHandler);
 app.use("/brand", brandHandler);
 app.use("/collection", collectionHandler);
 app.use("/tax", taxHandler);
-app.use("/attribute", attributeHandler);
 app.use("/product",productHandler);
 app.use("/subscription",subscriptionHandler);
+app.use("/user",userHandler);
+app.use("/cart",cartHandler);
 
 
 
@@ -61,8 +61,8 @@ function errorHandler(err,req, res, next){
 }
 
 
-app.listen(3000,() =>{
-    console.log("The project started on port:3000")
+app.listen(3003,() =>{
+    console.log("The project started on port:3003")
 })
 
 console.log('hello world')
