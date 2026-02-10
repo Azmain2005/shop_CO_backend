@@ -102,10 +102,26 @@ router.post("/all", async (req, res) => {
 });
 
 // ✅ PUT update cart
+const normalizeAttributes = (attrs = {}) => {
+  if (attrs instanceof Map) {
+    attrs = Object.fromEntries(attrs);
+  }
+
+  return JSON.stringify(
+    Object.keys(attrs)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = attrs[key];
+        return acc;
+      }, {})
+  );
+};
+
+
 // ✅ ADD / UPDATE product in cart
 router.put("/:id", async (req, res) => {
   try {
-    const { product, count, attributes } = req.body;
+    const { product, count = 1, attributes = {} } = req.body;
 
     const cart = await Cart.findById(req.params.id);
 
@@ -113,14 +129,17 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Cart not found" });
     }
 
-    // Check if product already exists
-    const existingItem = cart.products.find(
-      (p) => p.product.toString() === product
-    );
+    const incomingAttrs = normalizeAttributes(attributes);
+
+    const existingItem = cart.products.find((p) => {
+      return (
+        p.product.toString() === product &&
+        normalizeAttributes(p.attributes) === incomingAttrs
+      );
+    });
 
     if (existingItem) {
       existingItem.count += count;
-      existingItem.attributes = attributes;
     } else {
       cart.products.push({
         product,
@@ -132,7 +151,7 @@ router.put("/:id", async (req, res) => {
     await cart.save();
 
     res.status(200).json({
-      message: "Product added to cart",
+      message: "Cart updated successfully",
       cart,
     });
   } catch (err) {
@@ -140,7 +159,70 @@ router.put("/:id", async (req, res) => {
   }
 });
 
- 
+
+//DELETE product on cart
+router.put("/deleteproductcart/:id", async (req, res) => {
+  try {
+    const { product, attributes = {} } = req.body;
+    const cart = await Cart.findById(req.params.id);
+
+    if (!cart) {
+      return res.status(404).json({ error: "Cart not found" });
+    }
+    const incomingAttrs = normalizeAttributes(attributes);
+    const initialLength = cart.products.length;
+
+    cart.products = cart.products.filter((p) => {
+      return !(
+        p.product.toString() === product &&
+        normalizeAttributes(p.attributes) === incomingAttrs
+      );
+    });
+    await cart.save();
+
+    res.status(200).json({
+      message: "Cart updated successfully",
+      cart,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+})
+
+
+//Increase count of product on cart 
+router.put("/editproductcart/:id", async (req, res) => {
+  try {
+    const { product, count, attributes = {} } = req.body;
+    const cart = await Cart.findById(req.params.id);
+
+    if (!cart) {
+      return res.status(404).json({ error: "Cart not found" });
+    }
+    const incomingAttrs = normalizeAttributes(attributes);
+    // Find the matching product in cart
+    const item = cart.products.find(
+      (p) =>
+        p.product.toString() === product &&
+        normalizeAttributes(p.attributes) === incomingAttrs
+    );
+    if (!item) {
+      return res.status(404).json({ error: "Product not found in cart" });
+    }
+
+        // Update the count
+    item.count = count; // or: item.count += count; for increment
+
+    await cart.save();
+
+    res.status(200).json({
+      message: "Cart updated successfully",
+      cart,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+})
 
 // ✅ DELETE cart
 router.delete("/:id", async (req, res) => {
