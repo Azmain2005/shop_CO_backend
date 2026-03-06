@@ -1,4 +1,6 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 const User = require("../schemas/userSchema");
 
@@ -71,6 +73,84 @@ router.post("/", async (req, res) => {
 });
 
 
+
+
+
+// create a admin user
+router.post("/admin", async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const newUser = new User({
+      email: req.body.email,
+      password: hashedPassword,
+      role: req.body.role
+    });
+
+    await newUser.save();
+
+    res.status(201).json({
+      message: "ADMIN User created successfully",
+      user: newUser,
+    });
+  } catch (err) {
+    console.error("POST /user error:", err);
+    res.status(500).json({
+      error: "Server error",
+      details: err.message,
+    });
+  }
+});
+
+
+
+//admin user login
+router.post("/admin/login", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email});
+
+    if (user) {
+      console.log(req.body.email);
+      console.log(req.body.password);
+      console.log(user.password);
+      const isValidPassword = await bcrypt.compare(
+        req.body.password,
+        user.password
+      );
+      console.log(isValidPassword);
+
+      if (isValidPassword) {
+        // generate jwt token
+        const token = jwt.sign(
+          {
+            email: user.email,
+            userId: user._id,
+          },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "1h",
+          }
+        );
+
+        res.status(200).json({
+          access_token: token,
+          message: "LOGIN SUCCESSFUL",
+        });
+      } else {
+        res.status(401).json({
+          error: "Authentication failed",
+        });
+      }
+    } else {
+      res.status(401).json({
+        error: "Authentication failed",
+      });
+    }
+  } catch (err) {
+    res.status(401).json({
+      error: "Authentication failed",
+    });
+  }
+});
 
 
 

@@ -3,6 +3,8 @@ const router = express.Router();
 const categorieSchema =require('../schemas/categorieSchema');
 const mongoose  = require("mongoose");
 const Categorie = new mongoose.model("Categorie",categorieSchema);
+const checkLogin = require("../middlewares/checkLogin");
+
 
 // get all Categories
 router.get('/', async (req, res) => {
@@ -26,7 +28,7 @@ router.get('/:id', async (req, res) => {
 });
 
 //Post categorie
-router.post('/', async (req, res) => {
+router.post('/',checkLogin, async (req, res) => {
   try {
     const newcategorie = new Categorie(req.body);
     await newcategorie.save();
@@ -43,7 +45,7 @@ router.post('/', async (req, res) => {
 
 
 // Post multiple categories
-router.post('/all', async (req, res) => {
+router.post('/all',checkLogin, async (req, res) => {
   try {
     if (!Array.isArray(req.body) || req.body.length === 0) {
       return res.status(400).json({
@@ -67,7 +69,7 @@ router.post('/all', async (req, res) => {
 
 
 // put categorie
-router.put('/:id', async (req, res) => {
+router.put('/:id',checkLogin, async (req, res) => {
   try {
     const updated = await Categorie.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: "categorie not found" });
@@ -78,7 +80,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // delete categorie
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',checkLogin, async (req, res) => {
   try {
     const deleted = await Categorie.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: "categorie not found" });

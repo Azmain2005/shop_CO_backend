@@ -1,5 +1,7 @@
 const express = require("express");
 const  mongoose = require('mongoose');
+const dotenv = require("dotenv");
+
 const todoHandler = require("./routeHandler/todoHandler");
 const reviewHandler = require("./routeHandler/reviewHandler");
 const categorieHandler = require("./routeHandler/categorieHandler");
@@ -10,9 +12,11 @@ const productHandler = require("./routeHandler/productHandler");
 const subscriptionHandler = require("./routeHandler/subscriptionHandler");
 const userHandler = require("./routeHandler/userHandler");
 const cartHandler = require("./routeHandler/cartHandler");
+const orderHandler = require("./routeHandler/orderHandler");
 
 
 const cors = require("cors"); // ✅ import cors
+dotenv.config();
 
 
 
@@ -49,6 +53,7 @@ app.use("/product",productHandler);
 app.use("/subscription",subscriptionHandler);
 app.use("/user",userHandler);
 app.use("/cart",cartHandler);
+app.use("/order", orderHandler);
 
 
 
@@ -65,4 +70,4 @@ app.listen(3003,() =>{
     console.log("The project started on port:3003")
 })
 
-console.log('hello world')
+console.log('server starting')

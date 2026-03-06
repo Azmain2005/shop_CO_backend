@@ -59,14 +59,18 @@ router.post("/", async (req, res) => {
 // ✅ GET cart which is on editing by userId
 router.get("/specificcart/:id", async (req, res) => {
   try {
-    const userId = req.params.id; // this is the MongoDB user _id
+    const cartId = req.params.id; // this is the MongoDB user _id
 
     // Find cart for this user where status is "editing"
-    const cart = await Cart.findOne({ user: userId, cartStatus: "editing" }).populate("products.product")  // <-- populate here
+    const cart = await Cart.findOne({
+      _id: cartId,
+      cartStatus: "editing",
+    })
+      .populate("products.product")
       .populate("user");
 
     if (!cart) {
-      return res.status(404).json({ error: "Cart not found" });
+      return res.status(404).json({ error: "Cart not found or not in editing status" });
     }
 
     res.status(200).json({
@@ -210,7 +214,7 @@ router.put("/editproductcart/:id", async (req, res) => {
       return res.status(404).json({ error: "Product not found in cart" });
     }
 
-        // Update the count
+    // Update the count
     item.count = count; // or: item.count += count; for increment
 
     await cart.save();
@@ -223,6 +227,49 @@ router.put("/editproductcart/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 })
+
+
+
+
+// ✅ UPDATE only the cart status by ID
+router.put("/update-status/:id", async (req, res) => {
+  try {
+    const { cartStatus } = req.body;
+
+    // 1. Basic validation to ensure a status was actually sent
+    if (!cartStatus) {
+      return res.status(400).json({ error: "cartStatus is required in the request body" });
+    }
+
+    // 2. Find by ID and update the status field only
+    const updatedCart = await Cart.findByIdAndUpdate(
+      req.params.id,
+      { $set: { cartStatus } },
+      { 
+        new: true,           // Returns the updated document instead of the old one
+        runValidators: true  // Validates against your Schema enum (editing/pending/finished)
+      }
+    );
+
+    // 3. Handle case where ID doesn't exist
+    if (!updatedCart) {
+      return res.status(404).json({ error: "No cart found with that ID" });
+    }
+
+    res.status(200).json({
+      message: `Cart status updated to ${cartStatus}`,
+      cartId: updatedCart._id,
+      newStatus: updatedCart.cartStatus
+    });
+
+  } catch (err) {
+    // This will catch validation errors (e.g., if you sent "shipped" which isn't in your enum)
+    res.status(500).json({ error: "Update failed", details: err.message });
+  }
+});
+
+
+
 
 // ✅ DELETE cart
 router.delete("/:id", async (req, res) => {
