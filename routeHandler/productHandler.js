@@ -3,6 +3,8 @@ const router = express.Router();
 const productSchema =require('../schemas/productSchema');
 const mongoose  = require("mongoose");
 const Product = new mongoose.model("Product",productSchema);
+const checkLogin = require("../middlewares/checkLogin");
+
 
 // get all Products
 router.get('/', async (req, res) => {
@@ -27,7 +29,7 @@ router.get('/:id', async (req, res) => {
 
 
 //Post Product
-router.post('/', async (req, res) => {
+router.post('/',checkLogin, async (req, res) => {
   try {
     const newProduct = new Product(req.body);
     await newProduct.save();
@@ -44,7 +46,7 @@ router.post('/', async (req, res) => {
 
 
 // Post multiple Products
-router.post('/all', async (req, res) => {
+router.post('/all',checkLogin, async (req, res) => {
   try {
     if (!Array.isArray(req.body) || req.body.length === 0) {
       return res.status(400).json({
@@ -68,7 +70,7 @@ router.post('/all', async (req, res) => {
 
 
 // put Product
-router.put('/:id', async (req, res) => {
+router.put('/:id',checkLogin, async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: "Product not found" });
@@ -79,7 +81,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // delete Product
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',checkLogin, async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: "Product not found" });

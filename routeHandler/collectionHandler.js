@@ -3,6 +3,8 @@ const router = express.Router();
 const collectionSchema =require('../schemas/collectionSchema');
 const mongoose  = require("mongoose");
 const Collection = new mongoose.model("Collection",collectionSchema);
+const checkLogin = require("../middlewares/checkLogin");
+
 
 // get all Collection
 router.get('/', async (req, res) => {
@@ -26,7 +28,7 @@ router.get('/:id', async (req, res) => {
 });
 
 //Post Collection
-router.post('/', async (req, res) => {
+router.post('/',checkLogin, async (req, res) => {
   try {
     const newCollection = new Collection(req.body);
     await newCollection.save();
@@ -43,7 +45,7 @@ router.post('/', async (req, res) => {
 
 
 // Post multiple Collections
-router.post('/all', async (req, res) => {
+router.post('/all',checkLogin, async (req, res) => {
   try {
     if (!Array.isArray(req.body) || req.body.length === 0) {
       return res.status(400).json({
@@ -67,7 +69,7 @@ router.post('/all', async (req, res) => {
 
 
 // put Collection
-router.put('/:id', async (req, res) => {
+router.put('/:id',checkLogin, async (req, res) => {
   try {
     const updated = await Collection.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: "Collection not found" });
@@ -78,7 +80,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // delete Collection
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',checkLogin, async (req, res) => {
   try {
     const deleted = await Collection.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: "Collection not found" });

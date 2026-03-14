@@ -109,15 +109,10 @@ router.post("/admin/login", async (req, res) => {
     const user = await User.findOne({ email: req.body.email});
 
     if (user) {
-      console.log(req.body.email);
-      console.log(req.body.password);
-      console.log(user.password);
       const isValidPassword = await bcrypt.compare(
         req.body.password,
         user.password
       );
-      console.log(isValidPassword);
-
       if (isValidPassword) {
         // generate jwt token
         const token = jwt.sign(
