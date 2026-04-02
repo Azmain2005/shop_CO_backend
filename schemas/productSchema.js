@@ -59,22 +59,29 @@ const productSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  attributes: [
-    {
-      title: {
-        type: String,
-        required: true,
-      },
-      values: {
-        type: [String],
-        required: true,
-        validate: {
-          validator: arr => Array.isArray(arr) && arr.length > 0,
-          message: "Attribute values cannot be empty",
+attributes: [
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    values: {
+      type: [
+        {
+          val: { type: String, required: true },
+          price: { type: Number, required: true, default: 0 }
+        }
+      ],
+      required: true,
+      validate: {
+        validator: function(arr) {
+          return Array.isArray(arr) && arr.length > 0;
         },
+        message: "Attribute values cannot be empty",
       },
     },
-  ],
+  },
+],
 
   brand: {
     type: mongoose.Schema.Types.ObjectId,

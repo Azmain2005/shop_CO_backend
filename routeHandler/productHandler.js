@@ -69,21 +69,40 @@ router.get('/page/:pageNumber', async (req, res) => {
   }
 });
 //Post Product
-router.post('/',checkLogin, async (req, res) => {
+// Post Product
+router.post('/', checkLogin, async (req, res) => {
   try {
-    const newProduct = new Product(req.body);
+    // 1. Destructure the body to handle attributes specifically if needed
+    const { attributes, ...otherData } = req.body;
+
+    // 2. Ensure attributes are formatted correctly as objects with prices
+    const formattedAttributes = attributes?.map(attr => ({
+      title: attr.title,
+      values: attr.values.map(v => ({
+        val: v.val,
+        price: Number(v.price) || 0 // Ensure price is saved as a Number
+      }))
+    }));
+
+    // 3. Create the product with the formatted attributes
+    const newProduct = new Product({
+      ...otherData,
+      attributes: formattedAttributes
+    });
+
     await newProduct.save();
+    
     res.status(200).json({
       message: "Product inserted successfully",
     });
   } catch (err) {
+    console.error("Mongoose Save Error:", err); // This will show in your terminal
     res.status(500).json({
       error: "There was a server side error",
-      details: err.message,
+      details: err.message, // This helps you see the exact field failing in the frontend console
     });
   }
 });
-
 
 // Post multiple Products
 router.post('/all',checkLogin, async (req, res) => {
@@ -110,13 +129,32 @@ router.post('/all',checkLogin, async (req, res) => {
 
 
 // put Product
-router.put('/:id',checkLogin, async (req, res) => {
+router.put('/:id', checkLogin, async (req, res) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { attributes, ...otherData } = req.body;
+
+    // Format attributes for update
+    const updateData = { ...otherData };
+    if (attributes) {
+      updateData.attributes = attributes.map(attr => ({
+        title: attr.title,
+        values: attr.values.map(v => ({
+          val: v.val,
+          price: Number(v.price) || 0
+        }))
+      }));
+    }
+
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id, 
+      updateData, 
+      { new: true, runValidators: true } // runValidators ensures the new schema is respected
+    );
+
     if (!updated) return res.status(404).json({ error: "Product not found" });
     res.status(200).json(updated);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update Product" });
+    res.status(500).json({ error: "Failed to update Product", details: err.message });
   }
 });
 
