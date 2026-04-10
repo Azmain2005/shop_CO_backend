@@ -6,13 +6,27 @@ const Product = new mongoose.model("Product",productSchema);
 const checkLogin = require("../middlewares/checkLogin");
 
 
-// get all Products
+// get all Products (with optional category filtering)
+// get all Products (with advanced filtering)
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find({}).populate('brand').populate("collections").populate("tax").populate("categorie"); //  populate brand,collection data
+    const { category } = req.query; 
+    let query = {};
+
+    if (category) {
+      // Use "categorie.title" to search inside the array of objects
+      query["categorie.title"] = category;
+    }
+
+    const products = await Product.find(query)
+      .populate('brand')
+      .populate("collections")
+      .populate("tax")
+      .populate("categorie");
+
     res.status(200).json(products);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch Products" });
+    res.status(500).json({ error: "Failed to fetch Products", details: err.message });
   }
 });
  
