@@ -42,16 +42,24 @@ router.get('/:id', async (req, res) => {
 });
 
 // Get products by page with filtering and sorting
+// Backend: router.get('/page/:pageNumber', ...)
 router.get('/page/:pageNumber', async (req, res) => {
   try {
     const page = parseInt(req.params.pageNumber) || 1;
-    const limit = 3; // <--- CHANGE THIS TO 5
+    const limit = 3; // Adjusted limit
     const skipIndex = (page - 1) * limit;
 
-    const { brand, minPrice, maxPrice, sort } = req.query;
+    const { brand, minPrice, maxPrice, sort, category } = req.query; // Add category here
     let query = {};
 
     if (brand) query.brand = brand;
+    
+    // Add Category Filter Logic
+    if (category) {
+      // This matches the ID of the category stored in the Product
+      query.categorie = category; 
+    }
+
     if (minPrice || maxPrice) {
       query.selling = { 
         $gte: Number(minPrice) || 0, 
@@ -59,7 +67,6 @@ router.get('/page/:pageNumber', async (req, res) => {
       };
     }
 
-    // Sorting logic
     let sortOptions = { _id: -1 };
     if (sort === "low-high") sortOptions = { selling: 1 };
     if (sort === "high-low") sortOptions = { selling: -1 };
@@ -70,19 +77,17 @@ router.get('/page/:pageNumber', async (req, res) => {
       .limit(limit)
       .skip(skipIndex);
 
-    // CRITICAL: You must count with the SAME query to get accurate pagination
     const totalCount = await Product.countDocuments(query);
 
     res.status(200).json({
       data: products,
-      totalPages: Math.ceil(totalCount / limit), // e.g., 12 products / 5 = 3 pages
+      totalPages: Math.ceil(totalCount / limit),
       currentPage: page
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-//Post Product
 // Post Product
 router.post('/', checkLogin, async (req, res) => {
   try {
