@@ -1,16 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const productSchema =require('../schemas/productSchema');
-const mongoose  = require("mongoose");
-const Product = new mongoose.model("Product",productSchema);
+const productSchema = require('../schemas/productSchema');
+const mongoose = require("mongoose");
+const Product = new mongoose.model("Product", productSchema);
 const checkLogin = require("../middlewares/checkLogin");
 
 
-// get all Products (with optional category filtering)
 // get all Products (with advanced filtering)
 router.get('/', async (req, res) => {
   try {
-    const { category } = req.query; 
+    const { category } = req.query;
     let query = {};
 
     if (category) {
@@ -29,7 +28,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: "Failed to fetch Products", details: err.message });
   }
 });
- 
+
 // get single Product
 router.get('/:id', async (req, res) => {
   try {
@@ -42,28 +41,46 @@ router.get('/:id', async (req, res) => {
 });
 
 // Get products by page with filtering and sorting
-// Backend: router.get('/page/:pageNumber', ...)
 router.get('/page/:pageNumber', async (req, res) => {
   try {
     const page = parseInt(req.params.pageNumber) || 1;
-    const limit = 3; // Adjusted limit
+    const limit = 12;
     const skipIndex = (page - 1) * limit;
 
-    const { brand, minPrice, maxPrice, sort, category } = req.query; // Add category here
+    const { brand, minPrice, maxPrice, sort, category } = req.query;
     let query = {};
 
-    if (brand) query.brand = brand;
-    
-    // Add Category Filter Logic
     if (category) {
-      // This matches the ID of the category stored in the Product
-      query.categorie = category; 
+      const decodedCategory = decodeURIComponent(category);
+
+      // Check if the string is a valid MongoDB ObjectId
+      const isId = mongoose.Types.ObjectId.isValid(decodedCategory);
+
+      if (isId) {
+        // Option A: It's an ID, query directly
+        // Use { $in: [...] } because your data shows 'categorie' is an array
+        query.categorie = { $in: [decodedCategory] };
+      } else {
+        // Option B: It's a Name, find the ID from the Categorie collection first
+        const categoryDoc = await mongoose.model("Categorie").findOne({
+          title: { $regex: new RegExp(`^${decodedCategory}$`, "i") }
+        });
+
+        if (categoryDoc) {
+          query.categorie = { $in: [categoryDoc._id] };
+        } else {
+          // No category found by name, return empty results
+          return res.status(200).json({ data: [], totalPages: 0, currentPage: page });
+        }
+      }
     }
 
+    // Other filters
+    if (brand) query.brand = brand;
     if (minPrice || maxPrice) {
-      query.selling = { 
-        $gte: Number(minPrice) || 0, 
-        $lte: Number(maxPrice) || 999999 
+      query.selling = {
+        $gte: Number(minPrice) || 0,
+        $lte: Number(maxPrice) || 999999
       };
     }
 
@@ -88,6 +105,7 @@ router.get('/page/:pageNumber', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // Post Product
 router.post('/', checkLogin, async (req, res) => {
   try {
@@ -110,7 +128,7 @@ router.post('/', checkLogin, async (req, res) => {
     });
 
     await newProduct.save();
-    
+
     res.status(200).json({
       message: "Product inserted successfully",
     });
@@ -124,7 +142,7 @@ router.post('/', checkLogin, async (req, res) => {
 });
 
 // Post multiple Products
-router.post('/all',checkLogin, async (req, res) => {
+router.post('/all', checkLogin, async (req, res) => {
   try {
     if (!Array.isArray(req.body) || req.body.length === 0) {
       return res.status(400).json({
@@ -165,8 +183,8 @@ router.put('/:id', checkLogin, async (req, res) => {
     }
 
     const updated = await Product.findByIdAndUpdate(
-      req.params.id, 
-      updateData, 
+      req.params.id,
+      updateData,
       { new: true, runValidators: true } // runValidators ensures the new schema is respected
     );
 
@@ -178,7 +196,7 @@ router.put('/:id', checkLogin, async (req, res) => {
 });
 
 // delete Product
-router.delete('/:id',checkLogin, async (req, res) => {
+router.delete('/:id', checkLogin, async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: "Product not found" });
