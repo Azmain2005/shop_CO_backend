@@ -44,7 +44,7 @@ router.get('/:id', async (req, res) => {
 router.get('/page/:pageNumber', async (req, res) => {
   try {
     const page = parseInt(req.params.pageNumber) || 1;
-    const limit = 12;
+    const limit = 2;
     const skipIndex = (page - 1) * limit;
 
     const { brand, minPrice, maxPrice, sort, category } = req.query;
