@@ -13,6 +13,7 @@ const subscriptionHandler = require("./routeHandler/subscriptionHandler");
 const userHandler = require("./routeHandler/userHandler");
 const cartHandler = require("./routeHandler/cartHandler");
 const orderHandler = require("./routeHandler/orderHandler");
+const promobannerHadler = require("./routeHandler/promobannerHandler")
 
 
 const cors = require("cors"); // ✅ import cors
@@ -54,6 +55,7 @@ app.use("/subscription",subscriptionHandler);
 app.use("/user",userHandler);
 app.use("/cart",cartHandler);
 app.use("/order", orderHandler);
+app.use("/promobanner", promobannerHadler);
 
 
 
